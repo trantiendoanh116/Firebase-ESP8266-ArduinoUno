@@ -67,16 +67,9 @@ void loop() {
     timeSendValueSensor = millis();
     sendValueSensor();
   }
-//
-//   if (millis() - timeTest > TIME_CYCLE_SEND_VALUE_SENSOR) {
-//    Serial.println("Change light");
-//    timeTest = millis();
-//    digitalWrite(pinLightControl, !mValueLight);
-//  }
   
-  delay(20);
   sendValueDevice();
-  delay(200);
+  delay(500);
 }
 
 

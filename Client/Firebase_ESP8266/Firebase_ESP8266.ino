@@ -14,6 +14,9 @@ const byte TX = 4;
 SoftwareSerial serialArduino(RX, TX, false, 256);
 SerialCommand sCmd(serialArduino);
 
+//giá trị của các thiết bị
+int mValueLight, mValueFan, mValueApt;
+
 void setup() {
   Serial.begin(57600);
   serialArduino.begin(57600);
@@ -23,7 +26,9 @@ void setup() {
 
   // Khởi tạo Firebase
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
- 
+	mValueLight = Firebase.getInt("LIGHT");
+	mValueFan = Firebase.getInt("FAN");
+	mValueApt = Firebase.getInt("APT");
   // Nhận dữ liệu từ Arduino gửi lên
   sCmd.addDefaultHandler(receiveData);
 
@@ -58,16 +63,29 @@ void loop() {
 
 }
 void sendDataToArduino() {
+	bool isHaveDataChange= false;
   int valueLight = Firebase.getInt("LIGHT");
   int valueFan = Firebase.getInt("FAN");
   int valueApt= Firebase.getInt("APT");
   StaticJsonBuffer<200> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
-  root["LIGHT"] = valueLight;
-  root["FAN"] = valueFan;
+  if(mValueLight != valueLight){
+	  mValueLight = valueLight;
+	 root["LIGHT"] = valueLight;
+	 isHaveDataChange = true;
+  }
+  if(mValueFan != valueFan){
+	 mValueFan = valueFan;
+	  root["FAN"] = valueFan;
+	  isHaveDataChange = true;
+  }
+  if(mValueApt != valueApt){
+	  mValueApt = valueApt;
   root["APT"] = valueApt;
-
-  serialArduino.print("DATA");
+   isHaveDataChange = true;
+  }
+  if(isHaveDataChange){
+	  serialArduino.print("DATA");
   serialArduino.print('\r');
   root.printTo(serialArduino);
   serialArduino.print('\r');
@@ -79,7 +97,7 @@ void sendDataToArduino() {
     Serial.println("");
 
   }
-
+  }
 }
 
 void receiveData(String command)
