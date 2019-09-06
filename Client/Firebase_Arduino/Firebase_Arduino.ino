@@ -68,7 +68,7 @@ void loop() {
     sendValueSensor();
   }
   
-  sendValueDevice();
+  //sendValueDevice();
   delay(500);
 }
 
@@ -79,13 +79,10 @@ void receiveData() {
 
   StaticJsonBuffer<200> jsonBuffer;
   JsonObject& root = jsonBuffer.parseObject(json);
-
+  
   if (root.containsKey("LIGHT")) {
     int valueLight = root["LIGHT"];
-    if (valueLight != mValueLight) {
-      mValueLight = valueLight;
-      changeLight();
-    }
+      changeLight(valueLight);
   }
 
   if (root.containsKey("FAN")) {
@@ -107,14 +104,14 @@ void receiveData() {
 
 }
 
-void changeLight() {
+void changeLight(int valueLight) {
   if (IS_DEBUG) Serial.println("Change light");
-  if (mValueLight != digitalRead(pinLightStatus)) {
+  if (valueLight != digitalRead(pinLightStatus)) {
 //    digitalWrite(pinLightControl, HIGH);
 //    delay(100);
 //    digitalWrite(pinLightControl, LOW);
-
-  digitalWrite(pinLightControl, mValueLight);
+  digitalWrite(pinLightControl, valueLight);
+   sendValueDevice();
   }
 }
 void changeApt() {

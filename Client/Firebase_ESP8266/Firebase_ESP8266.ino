@@ -15,20 +15,20 @@ SoftwareSerial serialArduino(RX, TX, false, 256);
 SerialCommand sCmd(serialArduino);
 
 //giá trị của các thiết bị
-int mValueLight, mValueFan, mValueApt;
+int mValueLight = -1, mValueFan = -1, mValueApt = -1;
 
 void setup() {
-  Serial.begin(115200);
-  serialArduino.begin(115200);
+  Serial.begin(57600);
+  serialArduino.begin(57600);
 
   //Kết nối wifi
   connectWifi();
 
   // Khởi tạo Firebase
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
-	mValueLight = Firebase.getInt("LIGHT");
-	mValueFan = Firebase.getInt("FAN");
-	mValueApt = Firebase.getInt("APT");
+  // mValueLight = Firebase.getInt("LIGHT");
+  // mValueFan = Firebase.getInt("FAN");
+  // mValueApt = Firebase.getInt("APT");
   // Nhận dữ liệu từ Arduino gửi lên
   sCmd.addDefaultHandler(receiveData);
 
@@ -36,7 +36,7 @@ void setup() {
 void connectWifi() {
   Serial.print("Wifi connecting");
   WiFiManager wifiManager;
-   //wifiManager.resetSettings(); //Reset setup wifiManager
+  //wifiManager.resetSettings(); //Reset setup wifiManager
   wifiManager.setAPCallback(configModeCallback);
   if (!wifiManager.autoConnect()) {
     Serial.println(F("Ket noi den wifi that bai!"));
@@ -59,45 +59,46 @@ void loop() {
   sendDataToArduino();
 
   sCmd.readSerial();
-  delay(200);
+  delay(500);
 
 }
 void sendDataToArduino() {
-	bool isHaveDataChange= false;
+  bool isHaveDataChange = false;
   int valueLight = Firebase.getInt("LIGHT");
   int valueFan = Firebase.getInt("FAN");
-  int valueApt= Firebase.getInt("APT");
+  int valueApt = Firebase.getInt("APT");
   StaticJsonBuffer<200> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
-  if(mValueLight != valueLight){
-	  mValueLight = valueLight;
-	 root["LIGHT"] = valueLight;
-	 isHaveDataChange = true;
+  if (mValueLight != valueLight) {
+    mValueLight = valueLight;
+    root["LIGHT"] = valueLight;
+    isHaveDataChange = true;
   }
-  if(mValueFan != valueFan){
-	 mValueFan = valueFan;
-	  root["FAN"] = valueFan;
-	  isHaveDataChange = true;
+  if (mValueFan != valueFan) {
+    mValueFan = valueFan;
+    root["FAN"] = valueFan;
+    isHaveDataChange = true;
   }
-  if(mValueApt != valueApt){
-	  mValueApt = valueApt;
-  root["APT"] = valueApt;
-   isHaveDataChange = true;
+  if (mValueApt != valueApt) {
+    mValueApt = valueApt;
+    root["APT"] = valueApt;
+    isHaveDataChange = true;
   }
-  if(isHaveDataChange){
-	  serialArduino.print("DATA");
-  serialArduino.print('\r');
-  root.printTo(serialArduino);
-  serialArduino.print('\r');
-  //print for debug
-  if (DEBUG) {
-    Serial.print("Send to Arduino: ");
-    Serial.print(' ');
-    root.printTo(Serial);
-    Serial.println("");
+  if (isHaveDataChange) {
+    serialArduino.print("DATA");
+    serialArduino.print('\r');
+    root.printTo(serialArduino);
+    serialArduino.print('\r');
+    //print for debug
+    if (DEBUG) {
+      Serial.print("Send to Arduino: ");
+      Serial.print(' ');
+      root.printTo(Serial);
+      Serial.println("");
 
+    }
   }
-  }
+
 }
 
 void receiveData(String command)
@@ -115,11 +116,11 @@ void receiveData(String command)
   if (root.containsKey("FAN")) {
     Firebase.setInt("FAN", root["FAN"]);
   }
-  
+
   if (root.containsKey("TEMP")) {
     Firebase.setFloat("TEMP", root["TEMP"]);
   }
-  
+
   if (root.containsKey("HUMI")) {
     Firebase.setFloat("HUMI", root["HUMI"]);
   }
