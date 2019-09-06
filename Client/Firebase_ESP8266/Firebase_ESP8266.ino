@@ -18,8 +18,8 @@ SerialCommand sCmd(serialArduino);
 int mValueLight, mValueFan, mValueApt;
 
 void setup() {
-  Serial.begin(57600);
-  serialArduino.begin(57600);
+  Serial.begin(115200);
+  serialArduino.begin(115200);
 
   //Kết nối wifi
   connectWifi();
