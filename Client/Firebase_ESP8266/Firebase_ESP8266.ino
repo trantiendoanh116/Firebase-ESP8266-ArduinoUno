@@ -15,7 +15,6 @@ SoftwareSerial serialArduino(RX, TX, false, 256);
 SerialCommand sCmd(serialArduino);
 
 //giá trị của các thiết bị
-int mValueLight = -1, mValueFan = -1, mValueApt = -1;
 
 void setup() {
   Serial.begin(57600);
@@ -59,30 +58,36 @@ void loop() {
   sendDataToArduino();
 
   sCmd.readSerial();
-  delay(500);
+  delay(200);
 
 }
 void sendDataToArduino() {
   bool isHaveDataChange = false;
-  int valueLight = Firebase.getInt("LIGHT");
-  int valueFan = Firebase.getInt("FAN");
-  int valueApt = Firebase.getInt("APT");
+  bool ischangeLight = Firebase.getBool("/action/change_light");
+  bool ischangeApt = Firebase.getBool("/action/change_apt");
+  bool isOffFan = Firebase.getBool("/action/off_fan");
+  bool isOnFan = Firebase.getBool("/action/on_fan");
   StaticJsonBuffer<200> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
-  if (mValueLight != valueLight) {
-    mValueLight = valueLight;
-    root["LIGHT"] = valueLight;
+  if (ischangeLight) {
+    root["change_light"] = true;
     isHaveDataChange = true;
+    Firebase.setBool("/action/change_light", false);
   }
-  if (mValueFan != valueFan) {
-    mValueFan = valueFan;
-    root["FAN"] = valueFan;
+  if (ischangeApt) {
+    root["change_apt"] = true;
     isHaveDataChange = true;
+     Firebase.setBool("/action/change_apt", false);
   }
-  if (mValueApt != valueApt) {
-    mValueApt = valueApt;
-    root["APT"] = valueApt;
+  if (isOffFan) {
+    root["off_fan"] = true;
     isHaveDataChange = true;
+     Firebase.setBool("/action/off_fan", false);
+  }
+   if (isOnFan) {
+    root["on_fan"] = true;
+    isHaveDataChange = true;
+     Firebase.setBool("/action/on_fan", false);
   }
   if (isHaveDataChange) {
     serialArduino.print("DATA");
@@ -107,25 +112,25 @@ void receiveData(String command)
   StaticJsonBuffer<200> jsonBuffer;
   JsonObject& root = jsonBuffer.parseObject(json);
 
-  if (root.containsKey("LIGHT")) {
-    Firebase.setInt("LIGHT", root["LIGHT"]);
+  if (root.containsKey("light")) {
+    Firebase.setInt("/values/light", root["light"]);
   }
-  if (root.containsKey("APT")) {
-    Firebase.setInt("APT", root["APT"]);
+  if (root.containsKey("apt")) {
+    Firebase.setInt("/values/apt", root["apt"]);
   }
-  if (root.containsKey("FAN")) {
-    Firebase.setInt("FAN", root["FAN"]);
-  }
-
-  if (root.containsKey("TEMP")) {
-    Firebase.setFloat("TEMP", root["TEMP"]);
+  if (root.containsKey("fan")) {
+    Firebase.setInt("/values/fan", root["fan"]);
   }
 
-  if (root.containsKey("HUMI")) {
-    Firebase.setFloat("HUMI", root["HUMI"]);
+  if (root.containsKey("temp")) {
+    Firebase.setFloat("/values/temp", root["temp"]);
   }
-  if (root.containsKey("CO2")) {
-    Firebase.setFloat("CO2", root["CO2"]);
+
+  if (root.containsKey("humi")) {
+    Firebase.setFloat("/values/humi", root["humi"]);
+  }
+  if (root.containsKey("co2")) {
+    Firebase.setFloat("/values/co2", root["co2"]);
   }
 
   if (DEBUG) {

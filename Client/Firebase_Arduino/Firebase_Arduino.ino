@@ -1,75 +1,79 @@
 #include <ArduinoJson.h>
 #include <SoftwareSerial.h>
 #include <SerialCommand.h>
-//#include <DHT.h> // Gọi thư viện DHT22
+//#include <DHT.h>
 
-const byte RX = 5;          // Chân 11 được dùng làm chân RX
-const byte TX = 4;          // Chân 10 được dùng làm chân TX
+//const int DHTPIN = 13;
+//const int DHTTYPE = DHT22;
+//DHT dht(DHTPIN, DHTTYPE);
+
+const byte RX = 5;          // 3
+const byte TX = 4;          // 2
 
 SoftwareSerial serialEsp8266 = SoftwareSerial(RX, TX);
 SerialCommand sCmd(serialEsp8266); // Khai báo biến sử dụng thư viện Serial Command
 
-//const int DHTPIN = 12; //Đọc dữ liệu từ DHT22 ở chân D2 trên mạch Arduino
-//const int DHTTYPE = DHT22; //Khai báo loại cảm biến, có 2 loại là DHT11 và DHT22
-//DHT dht(DHTPIN, DHTTYPE);
-
-//const int pinSensorCo2 = A1;
-
-const int pinLightControl =  10; //8
-const int pinLightStatus = 11; //9
-
-//const int pinAPTControl = 2;
-//const int pinAPTStatus = 3;
-
-//const int pinFanOff = 22;
-//const int pinFanOn = 23;
-//const int pinFanStatusSpeed1 = 24;
-//const int pinFanStatusSpeed2 = 25;
-//const int pinFanStatusSpeed3 = 26;
-
+//const int fanOffPin = 4;
+//const int fanOnPin = 5;
 //
-int mValueLight , mValueFan, mValueApt;
+//const int speed1Pin = 6;
+//const int speed2Pin = 7;
+//const int speed3Pin = 8;
 
-//Khai báo cho các chu trình gửi dữ liệu
-long timeSendValueSensor;
-const long TIME_CYCLE_SEND_VALUE_SENSOR = 10000UL;
+const int lightControlPin = 10; //9
+const int lightStatusPin = 11; //11
 
-const int IS_DEBUG = 1;
+//const int ATControlPin = 10;
+//const int ATStatusPin = 12;
+
+
 
 void setup() {
   //Khởi tạo Serial
   Serial.begin(57600);
   serialEsp8266.begin(57600);
-  // initialize the pin as an output:
-  pinMode(pinLightControl, OUTPUT);
-  pinMode(pinLightStatus, INPUT);
 
-  //  pinMode(pinAPTControl, OUTPUT);
-  //  pinMode(pinFanOff, OUTPUT);
-  //  pinMode(pinFanOn, OUTPUT);
-  //
-  //  pinMode(pinLightStatus, INPUT);
-  //  pinMode(pinAPTStatus, INPUT);
-  //  pinMode(pinFanStatusSpeed1, INPUT);
-  //  pinMode(pinFanStatusSpeed2, INPUT);
-  //  pinMode(pinFanStatusSpeed3, INPUT);
+  // dht.begin(); // Khởi động cảm biến nhiệt
+  // initialize the pin as an output:
+  // pinMode(fanOnPin, OUTPUT);
+  // pinMode(fanOffPin, OUTPUT);
+  // pinMode (ATControlPin, OUTPUT);
+  pinMode(lightControlPin, OUTPUT);
+
+  pinMode (lightStatusPin, INPUT);
+  // pinMode (ATStatusPin, INPUT);
+  // pinMode(speed1Pin, INPUT);
+  // pinMode(speed2Pin, INPUT);
+  // pinMode(speed3Pin, INPUT);
+
+  //digitalWrite(fanOffPin, HIGH);
+  Serial.println("Da san sang nhan lenh");
 
   Serial.println("Da san sang nhan lenh");
   //Nhận dữ liệu từ ESP8266
   sCmd.addCommand("DATA",   receiveData);
 
 }
-long timeTest;
+
+int mValueLight = -1, mValueFan = -1, mValueApt = -1;
+
+//Khai báo cho các chu trình gửi dữ liệu
+unsigned long chuky = 0;
+const unsigned long TIME_RETRIEVE_DATA = 5000UL; //Cứ sau 2000ms = 5s thì chu kỳ lặp lại
+
+const int IS_DEBUG = 1;
+
 void loop() {
   sCmd.readSerial();
   //Gửi các giá trị cảm biến
-  if (millis() - timeSendValueSensor > TIME_CYCLE_SEND_VALUE_SENSOR) {
-    timeSendValueSensor = millis();
+  if (millis() - chuky > TIME_RETRIEVE_DATA) {
+    chuky = millis();
     sendValueSensor();
   }
-  
-  //sendValueDevice();
-  delay(500);
+
+  sendValueDevice();
+
+  delay(200);
 }
 
 
@@ -79,66 +83,79 @@ void receiveData() {
 
   StaticJsonBuffer<200> jsonBuffer;
   JsonObject& root = jsonBuffer.parseObject(json);
-  
-  if (root.containsKey("LIGHT")) {
-    int valueLight = root["LIGHT"];
-      changeLight(valueLight);
+
+  if (root.containsKey("change_light")) {
+    changeLight();
   }
 
-  if (root.containsKey("FAN")) {
-    int valueFan = root["FAN"];
-    if (valueFan != mValueFan) {
-      mValueFan = valueFan;
-      changeFan();
-    }
+  if (root.containsKey("change_apt")) {
+    changeApt();
   }
 
-  if (root.containsKey("APT")) {
-    int valueApt = root["APT"];
-    if (valueApt != mValueApt) {
-      mValueApt = valueApt;
-      changeApt();
-    }
+  if (root.containsKey("off_fan")) {
+    offFan();
   }
-  
+  if (root.containsKey("on_fan")) {
+    onFan();
+  }
+
 
 }
 
-void changeLight(int valueLight) {
+void changeLight() {
   if (IS_DEBUG) Serial.println("Change light");
-  if (valueLight != digitalRead(pinLightStatus)) {
-//    digitalWrite(pinLightControl, HIGH);
-//    delay(100);
-//    digitalWrite(pinLightControl, LOW);
-  digitalWrite(pinLightControl, valueLight);
-   sendValueDevice();
-  }
+
+  int value = !digitalRead(lightStatusPin);
+  digitalWrite(lightControlPin, value);
+
+  //  digitalWrite(lightControlPin, HIGH);
+  //  delay(100);
+  //  digitalWrite(lightControlPin, LOW);
+
 }
 void changeApt() {
   if (IS_DEBUG) Serial.println("Change Apt");
-  if (mValueApt != mValueApt) {
-//    digitalWrite(pinAPTControl, HIGH);
-//    delay(100);
-//    digitalWrite(pinAPTControl, LOW);
-  }
+
+  int value = !digitalRead(lightStatusPin);
+  digitalWrite(lightControlPin, value);
+
+  //  digitalWrite(ATControlPin, HIGH);
+  //  delay(50);
+  //  digitalWrite(ATControlPin, LOW);
 }
-void changeFan() {
-  if (IS_DEBUG) Serial.println("Change Fan");
-  if (mValueFan == 0) {
-    digitalWrite(pinLightControl, LOW);
-  } else {
-    digitalWrite(pinLightControl, HIGH);
-  }
+void offFan() {
+  if (IS_DEBUG) Serial.println("Off Fan");
+
+  int value = !digitalRead(lightStatusPin);
+  digitalWrite(lightControlPin, value);
+
+  //   digitalWrite(fanOffPin, LOW);
+  //  delay(50);
+  //  digitalWrite(fanOffPin, HIGH);
+
+
+}
+void onFan() {
+  if (IS_DEBUG) Serial.println("Off Fan");
+
+  int value = !digitalRead(lightStatusPin);
+  digitalWrite(lightControlPin, value);
+
+  //  digitalWrite(fanOnPin, HIGH);
+  //  delay(50);
+  //  digitalWrite(fanOnPin, LOW);
 
 }
 
 
 void sendValueSensor() {
+  //float h = dht.readHumidity(); //Đọc độ ẩm
+  //float t = dht.readTemperature(); //Đọc nhiệt độ
   StaticJsonBuffer<200> jsonBuffer2;
   JsonObject& root = jsonBuffer2.createObject();
-  root["TEMP"] = random(20, 50);
-  root["HUMI"] = random(60, 90);
-  root["CO2"] = random(0, 100);
+  root["temp"] = random(20, 50);
+  root["humi"] = random(60, 90);
+  root["co2"] = random(0, 100);
   //in ra cổng software serial để ESP8266 nhận
   serialEsp8266.print("DATA");   //gửi tên lệnh
   serialEsp8266.print('\r');           // gửi \r
@@ -146,49 +163,63 @@ void sendValueSensor() {
   serialEsp8266.print('\r');           // gửi \r
 
   if (IS_DEBUG) {
-    Serial.print("Update value sensor to esp8266: ");
+    Serial.print("Send to esp8266: ");
     root.printTo(Serial);
     Serial.print('\n');
   }
 }
 void sendValueDevice() {
   bool isHaveChangeValue = false;
-  int valueLight = digitalRead(pinLightStatus);
-  int valueFan = readSpeedFan();
-  int valueApt = mValueApt;
+  int valueLight = digitalRead(lightStatusPin);
+  int valueFan = readValueFan();
+  int valueApt = digitalRead(lightStatusPin);
   //Send data to ESP8266
   StaticJsonBuffer<200> jsonBuffer2;
   JsonObject& root = jsonBuffer2.createObject();
   if (valueLight != mValueLight) {
-    root["LIGHT"] = valueLight;
+    root["light"] = valueLight;
     isHaveChangeValue = true;
     mValueLight = valueLight;
   }
   if (valueFan != mValueFan) {
-    root["FAN"] = valueFan;
+    root["fan"] = valueFan;
     isHaveChangeValue = true;
     mValueFan = valueFan;
   }
   if (valueApt != mValueApt) {
-    root["APT"] = valueApt;
+    root["apt"] = valueApt;
     isHaveChangeValue = true;
     mValueApt = valueApt;
   }
- 
+
   if (isHaveChangeValue) {
     serialEsp8266.print("DATA");
     serialEsp8266.print('\r');
     root.printTo(serialEsp8266);
     serialEsp8266.print('\r');
     if (IS_DEBUG) {
-      Serial.print("Update value device control to Esp8266: ");
+      Serial.print("Send to Esp8266: ");
       root.printTo(Serial);
       Serial.print('\n');
     }
   }
 
 }
-
-int readSpeedFan() {
-  return mValueFan;
+int readValueFan() {
+  return digitalRead(lightStatusPin);
+  //    int speed1Status = !digitalRead(speed1Pin);
+  //    int speed2Status = !digitalRead(speed2Pin);
+  //    int speed3Status = !digitalRead(speed3Pin);
+  //    if(speed1Status == 0 and speed2Status == 0 and speed3Status ==0){
+  //      return 0;
+  //    }
+  //    if(speed1Status ==1){
+  //      return 1;
+  //    }
+  //     if(speed2Status ==1){
+  //      return 2;
+  //    }
+  //    if(speed3Status ==1){
+  //      return 3;
+  //    }
 }
