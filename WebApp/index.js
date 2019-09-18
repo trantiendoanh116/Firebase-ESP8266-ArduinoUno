@@ -14,7 +14,7 @@ console.log("Server nodejs chay tai dia chi: " + ip.address() + ":" + PORT)
 app.use(express.static("node_modules/mobile-angular-ui")) 			// Có thể truy cập các file trong node_modules/mobile-angular-ui từ xa
 app.use(express.static("node_modules/angular")) 							// Có thể truy cập các file trong node_modules/angular từ xa
 app.use(express.static("node_modules/angular-route")) 				// Có thể truy cập các file trong node_modules/angular-route từ xa
-app.use(express.static("webapp")) 	// Dùng để lưu trữ webapp
+app.use(express.static("public")) 	// Dùng để lưu trữ webapp
 
 
 

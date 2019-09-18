@@ -3,7 +3,7 @@
 		<div class="list-group text-center">
 			<!-- cục giới thiệu -->
 			<div class="list-group-item list-group-item-home">
-				<h1>SmartHome Webapp </h1>
+				<h1>Smart Home</h1>
 			</div>
 			<!-- Light-->
 
@@ -13,7 +13,7 @@
 				</div>
 				<div>
 					<h3 class="home-heading">TRẠNG THÁI ĐÈN</h3>
-					Đèn đang: {{light_status ? "ON" : "OFF"}}
+					Đèn đang: {{light_status ? "Bật" : "Tắt"}}
 					<button ng-click="changeLight()" type="button">ON/OFF</button>
 				</div>
 
@@ -27,7 +27,7 @@
 				</div>
 				<div>
 					<h3 class="home-heading">TRẠNG THÁI APTOMAT</h3>
-					Đèn đang: {{apt_status ? "ON" : "OFF"}}
+					Đèn đang: {{apt_status ? "Bật" : "Tắt"}}
 					<button ng-click="changeApt()" type="button">ON/OFF</button>
 				</div>
 
@@ -42,8 +42,9 @@
 				</div>
 				<div>
 					<h3 class="home-heading">TRẠNG THÁI QUẠT TRẦN</h3>
-
-						Tốc Độ: {{fan_status}}
+					<div>Quạt đang: {{fan_status ==0 ? "Tắt" : "Bật"}} </div>
+						
+						Tốc độ quạt: {{fan_status}}
 					
 				</div>
 				<button ng-click="onFanClick()" type="button" class="button">ON</button>
