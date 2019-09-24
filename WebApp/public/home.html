@@ -1,0 +1,74 @@
+<div class="scrollable">
+	<div class="scrollable-content">
+		<div class="list-group text-center">
+			<!-- cục giới thiệu -->
+			<div class="list-group-item list-group-item-home">
+				<h1>Smart Home</h1>
+			</div>
+			<!-- Light-->
+
+			<div class="list-group-item list-group-item-home">
+				<div>
+					<i class="fa fa-tachometer feature-icon  text-primary"></i>
+				</div>
+				<div>
+					<h3 class="home-heading">TRẠNG THÁI ĐÈN</h3>
+					Đèn đang: {{light_status ? "Bật" : "Tắt"}}
+					<button ng-click="changeLight()" type="button">ON/OFF</button>
+				</div>
+
+			</div>
+
+			<!-- Aptomat-->
+
+			<div class="list-group-item list-group-item-home">
+				<div>
+					<i class="fa fa-tachometer feature-icon  text-primary"></i>
+				</div>
+				<div>
+					<h3 class="home-heading">TRẠNG THÁI APTOMAT</h3>
+					Đèn đang: {{apt_status ? "Bật" : "Tắt"}}
+					<button ng-click="changeApt()" type="button">ON/OFF</button>
+				</div>
+
+			</div>
+
+
+			<!-- Status FAN-->
+
+			<div class="list-group-item list-group-item-home">
+				<div>
+					<i class="fa fa-tachometer feature-icon  text-primary"></i>
+				</div>
+				<div>
+					<h3 class="home-heading">TRẠNG THÁI QUẠT TRẦN</h3>
+					<div>Quạt đang: {{fan_status ==0 ? "Tắt" : "Bật"}} </div>
+						
+						Tốc độ quạt: {{fan_status}}
+					
+				</div>
+				<button ng-click="onFanClick()" type="button" class="button">ON</button>
+				<button ng-click="offFanClick()" type="button" class="button">OFF</button>
+			</div>
+			<!-- -->
+
+			<!-- -->
+			<div class="list-group-item list-group-item-home">
+				<div>
+					<i class="fa fa-tachometer feature-icon  text-primary"></i>
+				</div>
+				<h3>
+					Nhiệt độ : {{temp_value}} °C
+				</h3>
+				<h3>
+					Độ ẩm : {{humi_value}} %
+				</h3>
+				<h3>
+					Khí CO : {{co2_value}}
+				</h3>
+
+			</div>
+
+		</div>
+	</div>
+</div>
