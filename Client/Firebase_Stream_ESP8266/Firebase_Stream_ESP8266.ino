@@ -3,41 +3,52 @@
 #include <FirebaseArduino.h>
 #include <SerialCommand.h>
 
+// Set these to run example.
 #define WIFI_SSID "Hung tang 3"
 #define WIFI_PASSWORD "0966606670"
 
 #define FIREBASE_HOST "smarthome-116.firebaseio.com"
 #define FIREBASE_AUTH "XEuLN4OrBXM9aJgLM84oYC5Ygpxpms47vcfmPbGf"
+const String FIREBASE_PATH_ACTION = "/action";
+const String FIREBASE_PATH_VALUE  = "/values";
 
 const int DEBUG = 1;
 
 const byte RX = 5;
 const byte TX = 4;
-SoftwareSerial serialArduino(RX, TX, false, 256);
-SerialCommand sCmd(serialArduino);
 
+ SoftwareSerial serialArduino(RX, TX, false);
+ SerialCommand sCmd(serialArduino);
 //giá trị của các thiết bị
-String PATH_ACTION_FIREBASE = "/action";
-String  PATH_VALUES_FIREBASE = "/values";
+
+
 void setup() {
+ 
+
   Serial.begin(57600);
   serialArduino.begin(57600);
 
   //Kết nối wifi
- connectWifi();
-//wifiConnect();
+  //connectWifi();
 
-  // Khởi tạo Firebase
-    Firebase.begin("smarthome-116.firebaseio.com", "FlPp0B4gmG8cPQkHjI9kdO9RBnajTKrNoXMuB7xH");
-  // Firebase.stream("/dev/action");
-  // mValueLight = Firebase.getInt("LIGHT");
-  // mValueFan = Firebase.getInt("FAN");
-  // mValueApt = Firebase.getInt("APT");
+  // connect to wifi.
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("connecting");
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.println();
+  Serial.print("connected: ");
+  Serial.println(WiFi.localIP());
+
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+   Firebase.stream(FIREBASE_PATH_ACTION);
   // Nhận dữ liệu từ Arduino gửi lên
   sCmd.addDefaultHandler(receiveData);
 
-}
 
+}
 void connectWifi() {
   Serial.print("Wifi connecting");
   WiFiManager wifiManager;
@@ -52,7 +63,6 @@ void connectWifi() {
   Serial.println();
   Serial.println("Wifi connected: ");
 }
-
 void configModeCallback (WiFiManager *myWiFiManager)
 {
   Serial.println("Entered config mode");
@@ -61,42 +71,57 @@ void configModeCallback (WiFiManager *myWiFiManager)
 }
 
 void loop() {
-  sendDataToArduino();
 
+
+  sendDataToArduino();
   sCmd.readSerial();
+  delay(20);
 
 }
 
 void sendDataToArduino() {
-  String pathChangeLight = PATH_ACTION_FIREBASE + "/change_light";
-  String pathChangeApt = PATH_ACTION_FIREBASE + "/change_apt";
-  String pathOffFan =  PATH_ACTION_FIREBASE + "/off_fan";
-  String pathOnFan =  PATH_ACTION_FIREBASE + "/on_fan";
+  String pathChangeLight =  "/change_light";
+  String pathChangeApt =  "/change_apt";
+  String pathOffFan =   "/off_fan";
+  String pathOnFan =   "/on_fan";
+
+  if (Firebase.available()) {
+    FirebaseObject event = Firebase.readEvent();
+    String eventType = event.getString("type");
+    String path = event.getString("path");
+    bool value = event.getBool("data");
+
+//    Serial.print("event: ");
+//    Serial.println(eventType);
+//    Serial.print("path: ");
+//    Serial.println(path);
+//    Serial.println(Firebase.getBool(PATH_ACTION_FIREBASE + path));
 
     bool isHaveDataChange = false;
     StaticJsonBuffer<200> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
-    if (Firebase.getBool(pathChangeLight)) {
+    if (path == pathChangeLight && value == true) {
       root["change_light"] = true;
       isHaveDataChange = true;
+      Firebase.setBool(FIREBASE_PATH_ACTION + pathChangeLight, false);
     }
-    if (Firebase.getBool(pathChangeApt)) {
+    if (path == pathChangeApt && value == true) {
       root["change_apt"] = true;
       isHaveDataChange = true;
-     // Firebase.setBool(pathChangeApt, false);
+      Firebase.setBool(FIREBASE_PATH_ACTION + pathChangeApt, false);
     }
-    if (Firebase.getBool(pathOffFan)) {
+    if (path == pathOffFan && value == true) {
       root["off_fan"] = true;
       isHaveDataChange = true;
-      //Firebase.setBool(pathOffFan, false);
+      Firebase.setBool(FIREBASE_PATH_ACTION + pathOffFan, false);
     }
-    if (Firebase.getBool(pathOnFan)) {
+    if (path == pathOnFan && value == true) {
       root["on_fan"] = true;
       isHaveDataChange = true;
-      //Firebase.setBool(pathOnFan, false);
+      Firebase.setBool(FIREBASE_PATH_ACTION + pathOnFan, false);
     }
     if (isHaveDataChange) {
-      serialArduino.print("data");
+      serialArduino.print("DATA");
       serialArduino.print('\r');
       root.printTo(serialArduino);
       serialArduino.print('\r');
@@ -110,10 +135,7 @@ void sendDataToArduino() {
       }
     }
 
-
-
-
-
+  }
 }
 
 void receiveData(String command)
@@ -123,24 +145,24 @@ void receiveData(String command)
   JsonObject& root = jsonBuffer.parseObject(json);
 
   if (root.containsKey("light")) {
-    Firebase.setInt(PATH_VALUES_FIREBASE + "/light", root["light"]);
+    Firebase.setInt(FIREBASE_PATH_VALUE + "/light", root["light"]);
   }
   if (root.containsKey("apt")) {
-    Firebase.setInt(PATH_VALUES_FIREBASE + "/apt", root["apt"]);
+    Firebase.setInt(FIREBASE_PATH_VALUE + "/apt", root["apt"]);
   }
   if (root.containsKey("fan")) {
-    Firebase.setInt(PATH_VALUES_FIREBASE + "/fan", root["fan"]);
+    Firebase.setInt(FIREBASE_PATH_VALUE + "/fan", root["fan"]);
   }
 
   if (root.containsKey("temp")) {
-    Firebase.setFloat(PATH_VALUES_FIREBASE + "/temp", root["temp"]);
+    Firebase.setFloat(FIREBASE_PATH_VALUE + "/temp", root["temp"]);
   }
 
   if (root.containsKey("humi")) {
-    Firebase.setFloat(PATH_VALUES_FIREBASE + "/humi", root["humi"]);
+    Firebase.setFloat(FIREBASE_PATH_VALUE + "/humi", root["humi"]);
   }
   if (root.containsKey("co2")) {
-    Firebase.setFloat(PATH_VALUES_FIREBASE + "/co2", root["co2"]);
+    Firebase.setFloat(FIREBASE_PATH_VALUE + "/co2", root["co2"]);
   }
 
   if (DEBUG) {

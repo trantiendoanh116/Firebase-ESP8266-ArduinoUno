@@ -7,8 +7,8 @@
 //const int DHTTYPE = DHT22;
 //DHT dht(DHTPIN, DHTTYPE);
 
-const byte RX = 5;          // 3
-const byte TX = 4;          // 2
+const byte RX = 5;       
+const byte TX = 4;         
 
 SoftwareSerial serialEsp8266 = SoftwareSerial(RX, TX);
 SerialCommand sCmd(serialEsp8266); // Khai báo biến sử dụng thư viện Serial Command
@@ -47,7 +47,6 @@ void setup() {
   // pinMode(speed3Pin, INPUT);
 
   //digitalWrite(fanOffPin, HIGH);
-  Serial.println("Da san sang nhan lenh");
 
   Serial.println("Da san sang nhan lenh");
   //Nhận dữ liệu từ ESP8266
@@ -55,25 +54,24 @@ void setup() {
 
 }
 
-int mValueLight = -1, mValueFan = -1, mValueApt = -1;
-
 //Khai báo cho các chu trình gửi dữ liệu
 unsigned long chuky = 0;
-const unsigned long TIME_RETRIEVE_DATA = 5000UL; //Cứ sau 2000ms = 5s thì chu kỳ lặp lại
+const unsigned long TIME_RETRIEVE_DATA = 10000UL; //Cứ sau 2000ms = 5s thì chu kỳ lặp lại
 
 const int IS_DEBUG = 1;
 
 void loop() {
-  sCmd.readSerial();
+ 
+ 
   //Gửi các giá trị cảm biến
-  if (millis() - chuky > TIME_RETRIEVE_DATA) {
-    chuky = millis();
-    sendValueSensor();
-  }
+//  if (millis() - chuky > TIME_RETRIEVE_DATA) {
+//    chuky = millis();
+//    sendData();
+//  }
 
-  sendValueDevice();
+   sCmd.readSerial();
 
-  delay(200);
+  delay(20);
 }
 
 
@@ -112,6 +110,20 @@ void changeLight() {
   //  delay(100);
   //  digitalWrite(lightControlPin, LOW);
 
+   int valueLight = digitalRead(lightStatusPin);
+   StaticJsonBuffer<200> jsonBuffer2;
+  JsonObject& root = jsonBuffer2.createObject();
+    root["light"] = valueLight;
+     serialEsp8266.print("DATA");
+    serialEsp8266.print('\r');
+    root.printTo(serialEsp8266);
+    serialEsp8266.print('\r');
+    if (IS_DEBUG) {
+      Serial.print("Send to Esp8266: ");
+      root.printTo(Serial);
+      Serial.print('\n');
+    }
+
 }
 void changeApt() {
   if (IS_DEBUG) Serial.println("Change Apt");
@@ -145,10 +157,15 @@ void onFan() {
   //  delay(50);
   //  digitalWrite(fanOnPin, LOW);
 
+
 }
 
 
-void sendValueSensor() {
+void sendData() {
+   int valueLight = digitalRead(lightStatusPin);
+  int valueFan = readValueFan();
+  int valueApt = digitalRead(lightStatusPin);
+  
   //float h = dht.readHumidity(); //Đọc độ ẩm
   //float t = dht.readTemperature(); //Đọc nhiệt độ
   StaticJsonBuffer<200> jsonBuffer2;
@@ -156,6 +173,9 @@ void sendValueSensor() {
   root["temp"] = random(20, 50);
   root["humi"] = random(60, 90);
   root["co2"] = random(0, 100);
+  root["light"] = valueLight;
+   root["fan"] = valueFan;
+   root["apt"] = valueApt;
   //in ra cổng software serial để ESP8266 nhận
   serialEsp8266.print("DATA");   //gửi tên lệnh
   serialEsp8266.print('\r');           // gửi \r
@@ -168,43 +188,7 @@ void sendValueSensor() {
     Serial.print('\n');
   }
 }
-void sendValueDevice() {
-  bool isHaveChangeValue = false;
-  int valueLight = digitalRead(lightStatusPin);
-  int valueFan = readValueFan();
-  int valueApt = digitalRead(lightStatusPin);
-  //Send data to ESP8266
-  StaticJsonBuffer<200> jsonBuffer2;
-  JsonObject& root = jsonBuffer2.createObject();
-  if (valueLight != mValueLight) {
-    root["light"] = valueLight;
-    isHaveChangeValue = true;
-    mValueLight = valueLight;
-  }
-  if (valueFan != mValueFan) {
-    root["fan"] = valueFan;
-    isHaveChangeValue = true;
-    mValueFan = valueFan;
-  }
-  if (valueApt != mValueApt) {
-    root["apt"] = valueApt;
-    isHaveChangeValue = true;
-    mValueApt = valueApt;
-  }
 
-  if (isHaveChangeValue) {
-    serialEsp8266.print("DATA");
-    serialEsp8266.print('\r');
-    root.printTo(serialEsp8266);
-    serialEsp8266.print('\r');
-    if (IS_DEBUG) {
-      Serial.print("Send to Esp8266: ");
-      root.printTo(Serial);
-      Serial.print('\n');
-    }
-  }
-
-}
 int readValueFan() {
   return digitalRead(lightStatusPin);
   //    int speed1Status = !digitalRead(speed1Pin);

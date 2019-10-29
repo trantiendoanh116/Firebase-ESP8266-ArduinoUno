@@ -19,7 +19,7 @@ homeModule.factory('database', function () {
 	};
 	firebase.initializeApp(firebaseConfig);
 	return firebase.database();
-	
+
 });
 //Hàm xử lý chính
 homeModule.controller('Home', function ($scope, database) {
@@ -33,38 +33,43 @@ homeModule.controller('Home', function ($scope, database) {
 	$scope.humi_value = 0;
 	database.ref(pathValues).on('value', function (snapshot) {
 
-			console.log(snapshot.val());
-			$scope.fan_status = snapshot.val().fan;
-			$scope.light_status = snapshot.val().light;
-			$scope.apt_status = snapshot.val().apt;
-			$scope.co2_value = snapshot.val().co2;
-			$scope.temp_value = snapshot.val().temp;
-			$scope.humi_value = snapshot.val().humi;
-			$scope.$apply();
+		console.log(snapshot.val());
+		$scope.fan_status = snapshot.val().fan;
+		$scope.light_status = snapshot.val().light;
+		$scope.apt_status = snapshot.val().apt;
+		$scope.co2_value = snapshot.val().co2;
+		$scope.temp_value = snapshot.val().temp;
+		$scope.humi_value = snapshot.val().humi;
+		$scope.$apply();
 	});
 
 	$scope.onFanClick = function () {
-		database.ref(pathAction+'/on_fan').set(true);
+		database.ref(pathAction + '/on_fan').set(true);
+		database.ref(pathAction + '/on_fan').set(false);
 		console.log("On FAN");
 	};
 
 
 	$scope.offFanClick = function () {
 		console.log("OFF FAN");
-		database.ref(pathAction+'/off_fan').set(true);
+		database.ref(pathAction + '/off_fan').set(true);
+		database.ref(pathAction + '/off_fan').set(false);
 	};
 
 
 
 	$scope.changeLight = function () {
 		console.log("ChangeLight");
-		database.ref(pathAction+'/change_light').set(true);
+		database.ref(pathAction + '/change_light').set(true);
+		
+		database.ref(pathAction + '/change_light').set(false);
 	};
 
 
 	$scope.changeApt = function () {
 		console.log("ChangeAtomat");
-		database.ref(pathAction+'/change_apt').set(true);
+		database.ref(pathAction + '/change_apt').set(true);
+		database.ref(pathAction + '/change_apt').set(false);
 	};
 
 });
