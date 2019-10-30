@@ -57,7 +57,7 @@ void loop() {
   sendDataToArduino();
 
   sCmd.readSerial();
-  delay(20);
+  delay(200);
 
 }
 void sendDataToArduino() {
@@ -72,30 +72,31 @@ void sendDataToArduino() {
     String path = event.getString("path");
     bool value = event.getBool("data");
 
-//    Serial.print("event: ");
-//    Serial.println(eventType);
-//    Serial.print("path: ");
-//    Serial.println(path);
-//    Serial.println(Firebase.getBool(PATH_ACTION_FIREBASE + path));
+    Serial.print("event: ");
+    Serial.println(eventType);
+    Serial.print("path: ");
+    Serial.println(path);
+     Serial.print("value: ");
+    Serial.println(value);
 
     bool isHaveDataChange = false;
     StaticJsonBuffer<200> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
-    if (path == pathChangeLight && value == true) {
+    if (path == pathChangeLight) {
       root["change_light"] = true;
       isHaveDataChange = true;
     }
-    if (path == pathChangeApt && value == true) {
+    if (path == pathChangeApt) {
       root["change_apt"] = true;
       isHaveDataChange = true;
      
     }
-    if (path == pathOffFan && value == true) {
+    if (path == pathOffFan) {
       root["off_fan"] = true;
       isHaveDataChange = true;
       
     }
-    if (path == pathOnFan && value == true) {
+    if (path == pathOnFan) {
       root["on_fan"] = true;
       isHaveDataChange = true;
      

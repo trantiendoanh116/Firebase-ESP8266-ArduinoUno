@@ -44,32 +44,41 @@ homeModule.controller('Home', function ($scope, database) {
 	});
 
 	$scope.onFanClick = function () {
-		database.ref(pathAction + '/on_fan').set(true);
-		database.ref(pathAction + '/on_fan').set(false);
-		console.log("On FAN");
+		database.ref(pathAction + '/on_fan').once("value", function(data) {
+			var valueCurrent = data.val()
+			database.ref(pathAction + '/on_fan').set(!valueCurrent);
+			console.log("On FAN");
+		  });
 	};
 
 
 	$scope.offFanClick = function () {
-		console.log("OFF FAN");
-		database.ref(pathAction + '/off_fan').set(true);
-		database.ref(pathAction + '/off_fan').set(false);
+		database.ref(pathAction + '/off_fan').once("value", function(data) {
+			var valueCurrent = data.val()
+			database.ref(pathAction + '/off_fan').set(!valueCurrent);
+			console.log("OFF FAN");
+		  });
 	};
 
 
 
 	$scope.changeLight = function () {
-		console.log("ChangeLight");
-		database.ref(pathAction + '/change_light').set(true);
+		database.ref(pathAction + '/change_light').once("value", function(data) {
+			var valueCurrent = data.val()
+			database.ref(pathAction + '/change_light').set(!valueCurrent);
+			
+		  });
 		
-		database.ref(pathAction + '/change_light').set(false);
 	};
 
 
 	$scope.changeApt = function () {
-		console.log("ChangeAtomat");
-		database.ref(pathAction + '/change_apt').set(true);
-		database.ref(pathAction + '/change_apt').set(false);
+		database.ref(pathAction + '/change_apt').once("value", function(data) {
+			var valueCurrent = data.val()
+			database.ref(pathAction + '/change_apt').set(!valueCurrent);
+			
+		  });
+	
 	};
 
 });
