@@ -58,16 +58,16 @@ void setup() {
 unsigned long chuky = 0;
 const unsigned long TIME_RETRIEVE_DATA = 10000UL; //Cứ sau 2000ms = 5s thì chu kỳ lặp lại
 
-const int IS_DEBUG = 1;
+const int IS_DEBUG = 0;
 
 void loop() {
  
  
   //Gửi các giá trị cảm biến
-//  if (millis() - chuky > TIME_RETRIEVE_DATA) {
-//    chuky = millis();
-//    sendData();
-//  }
+  if (millis() - chuky > TIME_RETRIEVE_DATA) {
+    chuky = millis();
+    sendData();
+  }
 
    sCmd.readSerial();
 

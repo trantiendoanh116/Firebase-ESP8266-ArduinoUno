@@ -9,7 +9,7 @@
 const String FIREBASE_PATH_ACTION = "/action";
 const String FIREBASE_PATH_VALUE  = "/values";
 
-const int DEBUG = 1;
+const int DEBUG = 0;
 
 const byte RX = 5;
 const byte TX = 4;
