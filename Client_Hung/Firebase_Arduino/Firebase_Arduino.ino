@@ -2,8 +2,7 @@
 #include <SoftwareSerial.h>
 #include <SerialCommand.h>
 #include <DHT.h> // Gọi thư viện DHT22
-//#include <RCSwitch.h>
-
+#include <RCSwitch.h>
 
 const int DHTPIN = 13;
 const int DHTTYPE = DHT22;
@@ -33,8 +32,8 @@ const int ATStatusPin = 10;
 
 void setup() {
   //Khởi tạo Serial
-  Serial.begin(57600);
-  serialEsp8266.begin(57600);
+  Serial.begin(115200);
+  serialEsp8266.begin(115200);
   //mySwitch.enableTransmit(11);
   FanSwitch.enableTransmit(5);
   offFan();
@@ -60,25 +59,33 @@ void setup() {
 
 }
 
-int mValueLight = -1, mValueFan = -1, mValueApt = -1;
-
 //Khai báo cho các chu trình gửi dữ liệu
 unsigned long chuky = 0;
-const unsigned long TIME_RETRIEVE_DATA = 15000UL; //Cứ sau 2000ms = 5s thì chu kỳ lặp lại
+const unsigned long TIME_RETRIEVE_DATA = 10000UL; //Cứ sau 2000ms = 5s thì chu kỳ lặp lại
+
+unsigned long chuky1 = 0;
+const unsigned long TIME_RETRIEVE_DATA_1 = 10000UL; //Cứ sau 2000ms = 5s thì chu kỳ lặp lại
+
 
 const int IS_DEBUG = 1;
 
 void loop() {
-
   //Gửi các giá trị cảm biến
-  if (millis() - chuky > TIME_RETRIEVE_DATA) {
-    chuky = millis();
-    sendValueSensor();
-     sendValueDevice();
+//  if (millis() - chuky > TIME_RETRIEVE_DATA) {
+//    chuky = millis();
+//    sendData();
+//  }
+
+   if (millis() - chuky1 > TIME_RETRIEVE_DATA_1) {
+    chuky1 = millis();
+    sendValueDeviceControl();
   }
+ 
+
 
   sCmd.readSerial();
-  delay(20);
+  delay(200);
+  
 }
 
 
@@ -117,7 +124,21 @@ void changeLight() {
   FanSwitch.send((address << 8) | 0b00001100, 24);
   delay(80);
   FanSwitch.send((address << 8) | 0b00000000, 24);
-
+  
+ int valueLight = !digitalRead(lightStatusPin);
+ Serial.println(valueLight);
+   StaticJsonBuffer<200> jsonBuffer2;
+  JsonObject& root = jsonBuffer2.createObject();
+    root["light"] = valueLight;
+     serialEsp8266.print("DATA");
+    serialEsp8266.print('\r');
+    root.printTo(serialEsp8266);
+    serialEsp8266.print('\r');
+    if (IS_DEBUG) {
+      Serial.print("Send to Esp8266: ");
+      root.printTo(Serial);
+      Serial.print('\n');
+    }
 }
 // *******************************************
 //     Bật tắt Atomat
@@ -130,6 +151,20 @@ void changeApt() {
   delay(80);
   FanSwitch.send((address << 8) | 0b00000000, 24);
 
+   int valueApt = !digitalRead(ATStatusPin);
+   StaticJsonBuffer<200> jsonBuffer2;
+  JsonObject& root = jsonBuffer2.createObject();
+    root["apt"] = valueApt;
+     serialEsp8266.print("DATA");
+    serialEsp8266.print('\r');
+    root.printTo(serialEsp8266);
+    serialEsp8266.print('\r');
+    if (IS_DEBUG) {
+      Serial.print("Send to Esp8266: ");
+      root.printTo(Serial);
+      Serial.print('\n');
+    }
+
 }
 // **************************************************
 //     Tắt quạt trần
@@ -141,6 +176,20 @@ void offFan() {
   FanSwitch.send((address << 8) | 0b00001100, 24);
   delay(80);
   FanSwitch.send((address << 8) | 0b00000000, 24);
+
+  int valueApt = readValueFan();
+   StaticJsonBuffer<200> jsonBuffer2;
+  JsonObject& root = jsonBuffer2.createObject();
+    root["fan"] = valueApt;
+     serialEsp8266.print("DATA");
+    serialEsp8266.print('\r');
+    root.printTo(serialEsp8266);
+    serialEsp8266.print('\r');
+    if (IS_DEBUG) {
+      Serial.print("Send to Esp8266: ");
+      root.printTo(Serial);
+      Serial.print('\n');
+    }
 }
 //****************************************************
 //      Bật quạt trần
@@ -154,16 +203,31 @@ void onFan() {
   delay(80);
   FanSwitch.send((address << 8) | 0b00000000, 24);
 
+   int valueApt = readValueFan();
+   StaticJsonBuffer<200> jsonBuffer2;
+  JsonObject& root = jsonBuffer2.createObject();
+    root["fan"] = valueApt;
+     serialEsp8266.print("DATA");
+    serialEsp8266.print('\r');
+    root.printTo(serialEsp8266);
+    serialEsp8266.print('\r');
+    if (IS_DEBUG) {
+      Serial.print("Send to Esp8266: ");
+      root.printTo(Serial);
+      Serial.print('\n');
+    }
+
 }
 
 
-void sendValueSensor() {
+void sendData() {
   float h = dht.readHumidity(); //Đọc độ ẩm
   float t = dht.readTemperature(); //Đọc nhiệt độ
+  Serial.println("temp: ");
 
-//  int valueLight = !digitalRead(lightStatusPin);
-//  int valueFan = readValueFan();
-//  int valueApt = !digitalRead(ATStatusPin);
+  int valueLight = !digitalRead(lightStatusPin);
+  int valueFan = readValueFan();
+  int valueApt = !digitalRead(ATStatusPin);
 
   StaticJsonBuffer<200> jsonBuffer2;
   JsonObject& root = jsonBuffer2.createObject();
@@ -173,6 +237,7 @@ void sendValueSensor() {
 //  root["light"] = valueLight;
 //  root["fan"] = valueFan;
 //  root["apt"] = valueApt;
+
   //in ra cổng software serial để ESP8266 nhận
   serialEsp8266.print("DATA");   //gửi tên lệnh
   serialEsp8266.print('\r');           // gửi \r
@@ -185,43 +250,34 @@ void sendValueSensor() {
     Serial.print('\n');
   }
 }
-void sendValueDevice() {
-  bool isHaveChangeValue = false;
+
+void sendValueDeviceControl() {
+
   int valueLight = !digitalRead(lightStatusPin);
   int valueFan = readValueFan();
   int valueApt = !digitalRead(ATStatusPin);
-  //Send data to ESP8266
+
   StaticJsonBuffer<200> jsonBuffer2;
   JsonObject& root = jsonBuffer2.createObject();
-  if (valueLight != mValueLight) {
-    root["light"] = valueLight;
-    isHaveChangeValue = true;
-    mValueLight = valueLight;
-  }
-  if (valueFan != mValueFan) {
-    root["fan"] = valueFan;
-    isHaveChangeValue = true;
-    mValueFan = valueFan;
-  }
-  if (valueApt != mValueApt) {
-    root["apt"] = valueApt;
-    isHaveChangeValue = true;
-    mValueApt = valueApt;
-  }
+  root["light"] = valueLight;
+  root["fan"] = valueFan;
+  root["apt"] = valueApt;
 
-  if (isHaveChangeValue) {
-    serialEsp8266.print("DATA");
-    serialEsp8266.print('\r');
-    root.printTo(serialEsp8266);
-    serialEsp8266.print('\r');
-    if (IS_DEBUG) {
-      Serial.print("Send to Esp8266: ");
-      root.printTo(Serial);
-      Serial.print('\n');
-    }
-  }
+  //in ra cổng software serial để ESP8266 nhận
+  serialEsp8266.print("DATA");   //gửi tên lệnh
+  serialEsp8266.print('\r');           // gửi \r
+  root.printTo(serialEsp8266); //gửi chuỗi JSON
+  serialEsp8266.print('\r');           // gửi \r
 
+  if (IS_DEBUG) {
+    Serial.print("Send to esp8266: ");
+    root.printTo(Serial);
+    Serial.print('\n');
+  }
 }
+
+
+
 int readValueFan() {
   int speed1Status = !digitalRead(speed1Pin);
   int speed2Status = !digitalRead(speed2Pin);
@@ -239,3 +295,4 @@ int readValueFan() {
     return 1;
   }
 }
+

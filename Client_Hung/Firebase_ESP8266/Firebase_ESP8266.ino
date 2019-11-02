@@ -9,7 +9,7 @@
 const String FIREBASE_PATH_ACTION = "/action";
 const String FIREBASE_PATH_VALUE  = "/values";
 
-const int DEBUG = 0;
+const int DEBUG = 1;
 
 const byte RX = 5;
 const byte TX = 4;
@@ -19,8 +19,8 @@ SerialCommand sCmd(serialArduino);
 //giá trị của các thiết bị
 
 void setup() {
-  Serial.begin(57600);
-  serialArduino.begin(57600);
+  Serial.begin(115200);
+  serialArduino.begin(115200);
 
   //Kết nối wifi
   connectWifi();
